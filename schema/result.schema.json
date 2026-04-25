@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ue-python-harness-result.schema.json",
+  "title": "UE Python Harness Result",
+  "type": "object",
+  "required": ["ok", "phase", "meta", "error"],
+  "properties": {
+    "ok": {"type": "boolean"},
+    "phase": {"type": "string", "enum": ["parse", "discover", "run"]},
+    "target": {
+      "type": ["object", "null"],
+      "properties": {
+        "node_id": {"type": ["string", "null"]},
+        "project_name": {"type": ["string", "null"]},
+        "machine": {"type": ["string", "null"]},
+        "user": {"type": ["string", "null"]},
+        "engine_version": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "nodes": {
+      "type": ["array", "null"],
+      "items": {
+        "type": "object",
+        "properties": {
+          "node_id": {"type": ["string", "null"]},
+          "project_name": {"type": ["string", "null"]},
+          "project_root": {"type": ["string", "null"]},
+          "machine": {"type": ["string", "null"]},
+          "user": {"type": ["string", "null"]},
+          "engine_version": {"type": ["string", "null"]},
+          "engine_root": {"type": ["string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "execution": {
+      "type": ["object", "null"],
+      "properties": {
+        "success": {"type": "boolean"},
+        "command_result": {"type": "string"},
+        "logs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "message"],
+            "properties": {
+              "type": {"type": "string"},
+              "message": {"type": "string"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "log_text": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "meta": {
+      "type": "object",
+      "required": ["started_unix_ms", "duration_ms", "transport", "protocol_version"],
+      "properties": {
+        "started_unix_ms": {"type": "integer"},
+        "duration_ms": {"type": "integer"},
+        "transport": {"type": "string"},
+        "protocol_version": {"type": "integer"}
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": ["object", "null"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "details": {}
+      },
+      "required": ["code", "message"],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

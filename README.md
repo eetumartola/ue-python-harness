@@ -10,6 +10,6 @@ Add to [user]/.codex/skills/ or whatever is the right place for your agent. So y
 
 You also need to enable remote Python execution in your Unreal Editor settings (Project Settings -> Plugins -> Python -> Enable Remote Execution)
 
-
+You need to have Unreal Editor running for this skill to work.
 
 Hint: Also pointing your agent to the Unreal source code will give you a double whammy of goodness.

@@ -44,6 +44,8 @@ ERROR_TIMEOUT = "TIMEOUT"
 ERROR_REMOTE_EXCEPTION = "REMOTE_EXCEPTION"
 ERROR_INVALID_ARGS = "INVALID_ARGUMENTS"
 
+DEFAULT_RUN_DISCOVERY_SETTLE_SEC = 0.2
+
 
 class HarnessArgumentError(Exception):
     """Raised for command-line argument parse errors."""
@@ -60,6 +62,13 @@ def _now_ms() -> int:
 
 def _duration_ms(start_monotonic: float) -> int:
     return int((time.monotonic() - start_monotonic) * 1000)
+
+
+def _remaining_timeout_sec(deadline_monotonic: float) -> float:
+    remaining = deadline_monotonic - time.monotonic()
+    if remaining <= 0:
+        raise OperationTimeoutError("Timed out before Unreal Python command could be sent")
+    return remaining
 
 
 def _parse_endpoint(value: str, arg_name: str) -> Tuple[str, int]:
@@ -305,10 +314,14 @@ def _read_script_file(path_value: str) -> str:
 def _run_execute(args: argparse.Namespace, command_text: str) -> Tuple[int, Dict[str, Any]]:
     started_unix_ms = _now_ms()
     started_mono = time.monotonic()
+    deadline_mono = started_mono + float(args.timeout_sec)
 
     try:
         client = RemoteExecutionClient(_build_config(args))
-        nodes = client.discover(timeout_sec=float(args.timeout_sec))
+        nodes = client.discover(
+            timeout_sec=float(args.timeout_sec),
+            settle_sec=DEFAULT_RUN_DISCOVERY_SETTLE_SEC,
+        )
         if not nodes:
             raise DiscoveryTimeoutError("No UE nodes discovered")
         target_node, select_error = _select_target(nodes, args)
@@ -334,7 +347,7 @@ def _run_execute(args: argparse.Namespace, command_text: str) -> Tuple[int, Dict
         raw_data = client.run_command(
             remote_node_id=str(target_node["node_id"]),
             command=command_text,
-            timeout_sec=float(args.timeout_sec),
+            timeout_sec=_remaining_timeout_sec(deadline_mono),
             unattended=unattended,
             exec_mode=exec_mode,
         )

@@ -143,18 +143,22 @@ class RemoteExecutionClient:
     def local_node_id(self) -> str:
         return self._local_node_id
 
-    def discover(self, timeout_sec: float) -> List[Dict[str, Any]]:
+    def discover(self, timeout_sec: float, settle_sec: Optional[float] = None) -> List[Dict[str, Any]]:
         if timeout_sec <= 0:
             raise ValueError("timeout_sec must be > 0")
+        if settle_sec is not None and settle_sec < 0:
+            raise ValueError("settle_sec must be >= 0")
 
         nodes: Dict[str, Dict[str, Any]] = {}
         deadline = time.monotonic() + timeout_sec
+        settle_deadline: Optional[float] = None
         next_ping = 0.0
 
         with self._open_udp_socket() as udp_sock:
             while True:
                 now = time.monotonic()
-                if now >= deadline:
+                effective_deadline = settle_deadline if settle_deadline is not None else deadline
+                if now >= effective_deadline:
                     break
 
                 if now >= next_ping:
@@ -164,7 +168,7 @@ class RemoteExecutionClient:
                     )
                     next_ping = now + DEFAULT_PING_INTERVAL_SEC
 
-                wait_sec = max(0.0, min(0.2, deadline - now))
+                wait_sec = max(0.0, min(0.2, effective_deadline - now))
                 if wait_sec <= 0:
                     break
 
@@ -192,6 +196,8 @@ class RemoteExecutionClient:
                 entry = dict(msg.data)
                 entry["node_id"] = node_id
                 nodes[node_id] = entry
+                if settle_sec is not None and settle_deadline is None:
+                    settle_deadline = min(deadline, time.monotonic() + settle_sec)
 
         return sorted(nodes.values(), key=lambda node: str(node.get("node_id", "")))
 

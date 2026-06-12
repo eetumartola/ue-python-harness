@@ -16,6 +16,8 @@ The skill is self-contained: runtime scripts and vendor transport code are in `s
 3. Run inline code:
    - `python scripts/run_harness.py run-code --timeout-sec 15 --target-project PaxDei --code "import unreal; unreal.log('hello')"`
 
+Run commands stop discovery shortly after the first node is found so `--timeout-sec` can be spent on the command itself.
+
 Prefer `--target-node-id` when multiple editor instances are running.
 
 ## Parsing contract
